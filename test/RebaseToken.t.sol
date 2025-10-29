@@ -25,9 +25,7 @@ contract RebaseTokenTest is Test {
     }
 
     function addRewardsToVault(uint256 rewardAmount) public {
-        (bool success, ) = payable(address(vault)).call{value: rewardAmount}(
-            ""
-        );
+        (bool success,) = payable(address(vault)).call{value: rewardAmount}("");
     }
 
     function testDepositLinear(uint256 amount) public {
@@ -52,11 +50,7 @@ contract RebaseTokenTest is Test {
         console.log("endBalance", endBalance);
         assertGt(endBalance, middleBalance);
 
-        assertApproxEqAbs(
-            endBalance - middleBalance,
-            middleBalance - startBalance,
-            1
-        );
+        assertApproxEqAbs(endBalance - middleBalance, middleBalance - startBalance, 1);
 
         vm.stopPrank();
     }
@@ -77,10 +71,7 @@ contract RebaseTokenTest is Test {
         vm.stopPrank();
     }
 
-    function testRedeemAfterTimeHasPassed(
-        uint256 depositAmount,
-        uint256 time
-    ) public {
+    function testRedeemAfterTimeHasPassed(uint256 depositAmount, uint256 time) public {
         time = bound(time, 1000, type(uint96).max); // this is a crazy number of years - 2^96 seconds is a lot
         depositAmount = bound(depositAmount, 1e5, type(uint96).max); // this is an Ether value of max 2^78 which is crazy
 
@@ -144,18 +135,14 @@ contract RebaseTokenTest is Test {
 
     function testCannotSetInterestRate(uint256 newInterestRate) public {
         vm.prank(user);
-        vm.expectPartialRevert(
-            bytes4(Ownable.OwnableUnauthorizedAccount.selector)
-        );
+        vm.expectPartialRevert(bytes4(Ownable.OwnableUnauthorizedAccount.selector));
         rebaseToken.setInterestRate(newInterestRate);
     }
 
     function testCannotCallMintAndBurn() public {
         vm.prank(user);
-        vm.expectPartialRevert(
-            bytes4(IAccessControl.AccessControlUnauthorizedAccount.selector)
-        );
-        rebaseToken.mint(user, 1);
+        vm.expectPartialRevert(bytes4(IAccessControl.AccessControlUnauthorizedAccount.selector));
+        rebaseToken.mint(user, 1, rebaseToken.getInterestRate());
         vm.expectRevert();
         rebaseToken.burn(user, 1);
     }
@@ -178,17 +165,9 @@ contract RebaseTokenTest is Test {
 
     function testInterestRateCanOnlyDecrease(uint256 newInterestRate) public {
         uint256 initialInterestRate = rebaseToken.getInterestRate();
-        newInterestRate = bound(
-            newInterestRate,
-            initialInterestRate,
-            type(uint96).max
-        );
+        newInterestRate = bound(newInterestRate, initialInterestRate, type(uint96).max);
         vm.prank(owner);
-        vm.expectPartialRevert(
-            bytes4(
-                RebaseToken.RebaseToken__InterestRateCanOnlyDecrease.selector
-            )
-        );
+        vm.expectPartialRevert(bytes4(RebaseToken.RebaseToken__InterestRateCanOnlyDecrease.selector));
         rebaseToken.setInterestRate(newInterestRate);
         assertEq(rebaseToken.getInterestRate(), initialInterestRate);
     }
